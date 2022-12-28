@@ -1,0 +1,61 @@
+NAME
+    RT-Extension-NotifyWebex - RT ScripAction Webex Teams integration
+
+DESCRIPTION
+    Allow for Webex notifications to be sent out via RT, heaving inspired by
+    RT-Extension-NotifySlack.
+
+RT VERSION
+    Works with RT 5.0.3.
+
+INSTALLATION
+    "perl Makefile.PL"
+    "make"
+    "make install"
+        May need root permissions
+
+    "make initdb" See the CONFIGURATION section below before running this
+    command. Only run this the first time you install this module. If you
+    run this twice, you may end up with duplicate data in your database.
+    Edit your /opt/rt5/etc/RT_SiteConfig.pm
+        Add this line:
+
+            Plugin('RT::Extension::NotifyWebex');
+
+    Clear your mason cache
+            rm -rf /opt/rt5/var/mason_data/obj
+
+    Restart your webserver
+
+CONFIGURATION
+    You must configure a $WebexToken to authenticate against the Webex APIs
+    using a webex Bot.
+    https://developer.webex.com/docs/bots#creating-a-webex-bot
+
+    You must also add the rooms which the integration posts to by id in
+    %WebexRooms
+
+    Example configuration:
+
+        Set($WebexToken, '<mywebextoken>');
+        Set(%WebexRooms,
+            'test'  => '<room1 id>',
+            'room2' => '<room2 id>',
+        );
+
+    The 'Notify Webex' ScripAction posts to one webex room. The default room
+    is currently set to 'test'. You can update this in the initialdata file
+    by changing the 'Notify Webex' ScripAction Argument to the desired webex
+    room To post to additional webex rooms, copy the ScripAction giving it a
+    new Name and Argument, something like "Webex Updates To Support".
+
+AUTHOR
+    Dan Poltawski <dan.poltawski@tnp.net.uk>
+
+LICENSE AND COPYRIGHT
+    This software is Copyright (c) 2022 by The Networking People (TNP) Ltd
+
+    This is free software, licensed under:
+
+      The GNU General Public License, Version 2, June 1991
+
