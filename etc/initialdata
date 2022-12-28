@@ -1,0 +1,85 @@
+use strict;
+use warnings;
+
+our @ScripActions;
+our @Scrips;
+our @Templates;
+
+########################################################################
+### ScripActions
+########################################################################
+@ScripActions = (
+    {
+        Name        => 'Notify Webex: test',
+        Description => 'Post ticket updates to webex room',
+        ExecModule  => 'NotifyWebex',
+        Argument    => 'test',
+    },
+);
+
+########################################################################
+### Templates
+########################################################################
+@Templates = ({
+    Name => 'Webex: Ticket Notification',
+    Description => 'Send a message to webex room using adaptive card and text fallback.',
+    Content =>q[
+
+{
+	my $card = {
+	   'type' => 'AdaptiveCard',
+	   '$schema' => 'http://adaptivecards.io/schemas/adaptive-card.json',
+	   'version' => '1.2',
+	   'selectAction' => {
+	      'type' => 'Action.OpenUrl', 
+	      'url' => RT->Config->Get('WebURL') . 'Ticket/Display.html?id=' . $Ticket->Id,
+	   },
+	   'body' => 
+		[{
+		    'type' => 'TextBlock',
+		    'text' => '#' . $Ticket->Id . ': '. $Transaction->BriefDescription,
+		    'spacing' => 'None',
+		    'size' => 'Small',
+		    'color' => 'Accent',
+		},
+		{
+		    'type' => 'TextBlock',
+		    'text' => $Ticket->Subject,
+		    'wrap' => JSON::true,
+		    'separator' => JSON::true,
+		},
+		{
+		    'type'    => 'FactSet',
+		    'spacing' => 'small',
+		    'separator' => JSON::true,
+		    'facts'   => [
+			{ 'title' => 'Requestor', 'value' =>  join ', ', $Ticket->Requestors->MemberEmailAddresses},
+			{ 'title' => 'Queue', 'value' => $Ticket->QueueObj->Name},
+			{ 'title' => 'Owner', 'value' => $Ticket->OwnerObj->Name},
+		    ]
+		}]
+	};
+
+	my $payload = {
+		'roomId' => $Room_ID,
+		'attachments' => [{ 'contentType' => 'application/vnd.microsoft.card.adaptive', 'content' => $card }],
+		'text' => $Transaction->BriefDescription.': #' . $Ticket->Id . ' - '. $Ticket->Subject,
+	};
+	JSON::to_json($payload);
+}
+]
+});
+
+########################################################################
+### Scrips
+########################################################################
+@Scrips = (
+    {
+        Description     => 'On create, notify webex test room',
+        ScripCondition  => 'On Create',
+        ScripAction     => 'Notify Webex: test',
+        Template        => 'Webex: Ticket Notification',
+    },
+);
+
+1;
